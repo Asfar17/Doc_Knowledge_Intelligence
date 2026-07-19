@@ -1,0 +1,30 @@
+Industrial Safety Guidelines
+
+1. Personal Protective Equipment (PPE)
+   - Always wear appropriate PPE including hard hats, safety glasses, gloves, and steel-toe boots in designated areas.
+   - Ensure PPE is in good condition and replaced when damaged.
+
+2. Machine Safety
+   - Never operate machinery without proper training and authorization.
+   - Always ensure safety guards are in place before starting equipment.
+   - Lockout/Tagout (LOTO) procedures must be followed when performing maintenance.
+
+3. Fire Safety
+   - Know the location of fire extinguishers and emergency exits.
+   - Conduct regular fire drills to ensure all personnel are familiar with evacuation procedures.
+   - Keep flammable materials stored in designated, secure areas.
+
+4. Electrical Safety
+   - Do not use electrical equipment with frayed cords or exposed wiring.
+   - Keep work areas dry to prevent electrical shocks.
+   - Only qualified electricians should perform electrical work.
+
+5. Chemical Safety
+   - Store chemicals in properly labeled containers.
+   - Follow Material Safety Data Sheets (MSDS) for handling and storage instructions.
+   - Use appropriate ventilation when working with hazardous chemicals.
+
+6. Emergency Procedures
+   - Report all accidents and near-misses immediately.
+   - Know the emergency contact numbers for medical assistance and fire department.
+   - Participate in safety training programs regularly.
