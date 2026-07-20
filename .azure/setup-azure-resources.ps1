@@ -11,8 +11,8 @@
 # ──────────────────────────────────────────────
 # Configuration
 # ──────────────────────────────────────────────
-$RESOURCE_GROUP_NAME      = "doc-knowledge-rg"
-$LOCATION                 = "eastus"
+$RESOURCE_GROUP_NAME      = "doc_knowledge"
+$LOCATION                 = "southeastasia"   # Allowed by subscription policy
 
 # App Service
 $BACKEND_APP_NAME         = "doc-knowledge-backend"
@@ -22,10 +22,10 @@ $APPSERVICE_PLAN_NAME     = "doc-knowledge-plan"
 $DB_SERVER_NAME           = "doc-knowledge-db"
 $DB_NAME                  = "doc_knowledge"
 $DB_ADMIN_USER            = "dbadmin"
-$DB_ADMIN_PASSWORD        = "CHANGE_ME_Strong#Pass1"   # <-- Set this
+$DB_ADMIN_PASSWORD        = "PASTE_YOUR_DB_PASSWORD"   # <-- Set this before running
 
 # Storage
-$STORAGE_ACCOUNT_NAME     = "docknowledgestorage"      # Must be lowercase, no hyphens, globally unique
+$STORAGE_ACCOUNT_NAME     = "docknowledgesto2"       # Must be lowercase, no hyphens, globally unique
 $STORAGE_CONTAINER_NAME   = "documents"
 
 # Redis
@@ -33,8 +33,8 @@ $REDIS_CACHE_NAME         = "doc-knowledge-redis"
 $REDIS_SKU                = "Basic"
 $REDIS_VM_SIZE            = "c0"                       # Smallest / free-tier equivalent
 
-# External services — fill these after creating cloud accounts
-$OPENAI_API_KEY           = "PASTE_YOUR_OPENAI_KEY"
+# External services — fill these locally before running, do NOT commit real keys
+$OPENAI_API_KEY           = "PASTE_YOUR_OPENAI_KEY_HERE"
 $OPENAI_MODEL             = "gpt-4o-mini"
 
 $QDRANT_HOST              = "PASTE_QDRANT_CLUSTER_URL"  # e.g. https://xxxx.cloud.qdrant.io
