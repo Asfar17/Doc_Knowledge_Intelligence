@@ -17,45 +17,85 @@ import spacy
 
 class KnowledgeService:
     def __init__(self):
-        self.embedding_model = SentenceTransformer("all-MiniLM-L6-v2")
-        try:
-            self.nlp = spacy.load("en_core_web_sm")
-        except Exception:
-            self.nlp = None
-        
-        # Qdrant Cloud uses a full HTTPS URL + API key; local uses host:port
-        if settings.IS_QDRANT_CLOUD:
-            self.qdrant_client = qdrant_client.QdrantClient(
-                url=settings.QDRANT_HOST,
-                api_key=settings.QDRANT_API_KEY,
+        self._embedding_model = None
+        self._nlp = None
+        self._qdrant_client = None
+        self._neo4j_driver = None
+        self._vector_store = None
+        self._graph_store = None
+        self._vector_index = None
+
+    @property
+    def embedding_model(self):
+        if self._embedding_model is None:
+            self._embedding_model = SentenceTransformer("all-MiniLM-L6-v2")
+        return self._embedding_model
+
+    @property
+    def nlp(self):
+        if self._nlp is None:
+            try:
+                self._nlp = spacy.load("en_core_web_sm")
+            except Exception:
+                self._nlp = False  # Mark as unavailable
+        return self._nlp if self._nlp else None
+
+    @property
+    def qdrant_client(self):
+        if self._qdrant_client is None:
+            if settings.IS_QDRANT_CLOUD:
+                self._qdrant_client = qdrant_client.QdrantClient(
+                    url=settings.QDRANT_HOST,
+                    api_key=settings.QDRANT_API_KEY,
+                )
+            else:
+                self._qdrant_client = qdrant_client.QdrantClient(
+                    host=settings.QDRANT_HOST,
+                    port=settings.QDRANT_PORT,
+                )
+        return self._qdrant_client
+
+    @property
+    def neo4j_driver(self):
+        if self._neo4j_driver is None:
+            self._neo4j_driver = GraphDatabase.driver(
+                settings.NEO4J_URI, auth=(settings.NEO4J_USER, settings.NEO4J_PASSWORD)
             )
-        else:
-            self.qdrant_client = qdrant_client.QdrantClient(
-                host=settings.QDRANT_HOST,
-                port=settings.QDRANT_PORT,
+        return self._neo4j_driver
+
+    @property
+    def vector_store(self):
+        if self._vector_store is None:
+            self._vector_store = QdrantVectorStore(
+                client=self.qdrant_client, collection_name="knowledge_chunks"
             )
-        self.neo4j_driver = GraphDatabase.driver(
-            settings.NEO4J_URI, auth=(settings.NEO4J_USER, settings.NEO4J_PASSWORD)
-        )
-        self.vector_store = QdrantVectorStore(client=self.qdrant_client, collection_name="knowledge_chunks")
-        self.graph_store = Neo4jGraphStore(
-            username=settings.NEO4J_USER,
-            password=settings.NEO4J_PASSWORD,
-            url=settings.NEO4J_URI,
-        )
-        
-        self.storage_context = StorageContext.from_defaults(
-            vector_store=self.vector_store,
-            graph_store=self.graph_store
-        )
-        
-        try:
-            self.vector_index = VectorStoreIndex.from_vector_store(
-                vector_store=self.vector_store,
-                storage_context=self.storage_context
+        return self._vector_store
+
+    @property
+    def graph_store(self):
+        if self._graph_store is None:
+            self._graph_store = Neo4jGraphStore(
+                username=settings.NEO4J_USER,
+                password=settings.NEO4J_PASSWORD,
+                url=settings.NEO4J_URI,
             )
-        except Exception:
-            self.vector_index = None
+        return self._graph_store
+
+    @property
+    def vector_index(self):
+        if self._vector_index is None:
+            try:
+                storage_context = StorageContext.from_defaults(
+                    vector_store=self.vector_store,
+                    graph_store=self.graph_store
+                )
+                self._vector_index = VectorStoreIndex.from_vector_store(
+                    vector_store=self.vector_store,
+                    storage_context=storage_context
+                )
+            except Exception:
+                self._vector_index = None
+        return self._vector_index
 
     def extract_entities_and_relations(self, text: str) -> Tuple[List[Dict], List[Dict]]:
         entities = []
@@ -177,7 +217,8 @@ class KnowledgeService:
         }
 
     def close(self):
-        self.neo4j_driver.close()
+        if self._neo4j_driver:
+            self._neo4j_driver.close()
 
 
 knowledge_service = KnowledgeService()
