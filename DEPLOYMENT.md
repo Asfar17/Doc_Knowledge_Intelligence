@@ -53,19 +53,22 @@ This script will:
 2. Click **Create**
 3. Fill in the basics:
    - Subscription: Your Azure subscription
-   - Resource Group: Use the same one from step 1 (`doc_knowledge`)
+   - Resource Group: Use the same one from step 1 (e.g., `doc_knowledge`)
    - Name: A unique name for your frontend (e.g., `doc-knowledge-frontend`)
    - Hosting plan: **Free** (for development)
-   - Deployment source: **GitHub**
-4. Click **Sign in with GitHub** and authorize Azure
-5. Select your repository and branch (`main`)
-6. In **Build details**:
+   - Deployment source: **GitHub** (or "Other" if you want to deploy manually later)
+4. If you selected GitHub:
+   - Click **Sign in with GitHub** and authorize Azure
+   - Select your organization, repository, and branch (main)
+5. In **Build details**:
    - App location: `/frontend`
    - API location: (leave blank)
    - Output location: `dist`
-7. Click **Review + create** → **Create**
-8. After deployment, go to the new Static Web App in Azure Portal → **Manage deployment token** and copy the token (you'll need this for GitHub Secrets)
-9. Also copy the **URL** of your Static Web App (you'll need this for GitHub Secrets too)
+6. Click **Review + create** → **Create**
+7. After deployment is complete (takes a few minutes):
+   - Go to your new Static Web App in Azure Portal
+   - Click **Manage deployment token** → Copy the token (you'll need this for GitHub Secrets)
+   - Also copy the **URL** of your Static Web App from the Overview page
 
 ### 3. Configure GitHub Secrets
 
@@ -73,10 +76,12 @@ Go to your GitHub repository → **Settings** → **Secrets and variables** → 
 
 | Secret Name | Description | Where to get it |
 |-------------|-------------|-----------------|
-| `AZURE_BACKEND_APP_NAME` | Name of your backend App Service | From step 1 (default: `doc-knowledge-backend`) |
-| `AZURE_BACKEND_PUBLISH_PROFILE` | Publish profile for backend | Azure Portal → Backend App Service → Deployment Center → Publish Profile → Download → Copy contents |
-| `AZURE_STATIC_WEB_APPS_API_TOKEN` | Deployment token for frontend | Azure Portal → Static Web App → Manage deployment token |
+| `AZURE_BACKEND_APP_NAME` | Name of your backend App Service | From step 1 (default: `doc-knowledge-backend`, check Azure Portal → App Service → Overview) |
+| `AZURE_BACKEND_PUBLISH_PROFILE` | Publish profile for backend | Azure Portal → Backend App Service → Deployment Center → Publish Profile → Download the .publishsettings file → Open it with a text editor → Copy the entire content |
+| `AZURE_STATIC_WEB_APPS_API_TOKEN` | Deployment token for frontend | Azure Portal → Static Web App → Manage deployment token → Copy the token |
 | `VITE_API_BASE_URL` | URL of your backend API | Azure Portal → Backend App Service → Overview → Default domain (e.g., `https://doc-knowledge-backend.azurewebsites.net`) |
+
+**CRITICAL**: Ensure each secret is added exactly as described, with no extra spaces or line breaks!
 
 ### 4. Initialize Database Tables
 
