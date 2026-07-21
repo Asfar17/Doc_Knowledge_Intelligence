@@ -16,24 +16,49 @@ jobs:
     steps:
     - uses: actions/checkout@v4
 
+    - name: Set up Python 3.12
+      uses: actions/setup-python@v5
+      with:
+        python-version: '3.12'
+
+    - name: Install dependencies into antenv
+      run: |
+        cd backend
+        python -m venv antenv
+        source antenv/bin/activate
+        pip install --upgrade pip
+        pip install -r requirements.txt
+
+    - name: Zip backend with installed packages
+      run: |
+        cd backend
+        zip -r ../backend.zip . \
+          --exclude "*.pyc" \
+          --exclude "__pycache__/*" \
+          --exclude "*.pyo"
+
     - name: Login to Azure
       uses: azure/login@v2
       with:
         creds: ${{ secrets.AZURE_CREDENTIALS }}
 
-    - name: Zip backend for deployment
+    - name: Deploy to Azure App Service via Kudu
       run: |
-        cd backend
-        zip -r backend.zip . --exclude "venv/*" --exclude "__pycache__/*" --exclude "*.pyc" --exclude "antenv/*"
-
-    - name: Deploy backend with Oryx build
-      run: |
-        az webapp deploy \
+        # Use Kudu's zipdeploy endpoint which preserves the antenv virtualenv
+        CREDS=$(az webapp deployment list-publishing-credentials \
           --name ${{ secrets.AZURE_BACKEND_APP_NAME }} \
           --resource-group doc_knowledge \
-          --src-path backend/backend.zip \
-          --type zip \
-          --async false
+          --query "{user:publishingUserName,pwd:publishingPassword}" \
+          -o tsv)
+        USER=$(echo "$CREDS" | cut -f1)
+        PWD=$(echo "$CREDS" | cut -f2)
+        
+        curl -X POST \
+          "https://${{ secrets.AZURE_BACKEND_APP_NAME }}.scm.azurewebsites.net/api/zipdeploy" \
+          -u "$USER:$PWD" \
+          -H "Content-Type: application/zip" \
+          --data-binary @backend.zip \
+          --max-time 300
 
   # ────────────────────────────────────────────
   # Build & Deploy Frontend → Azure Web App (Node)
@@ -63,16 +88,22 @@ jobs:
       with:
         creds: ${{ secrets.AZURE_CREDENTIALS }}
 
-    - name: Zip frontend for deployment
+    - name: Zip and deploy frontend
       run: |
         cd frontend
-        zip -r frontend.zip . --exclude "node_modules/*"
-
-    - name: Deploy frontend
-      run: |
-        az webapp deploy \
+        zip -r frontend.zip . --exclude "node_modules/.cache/*"
+        
+        CREDS=$(az webapp deployment list-publishing-credentials \
           --name ${{ secrets.AZURE_FRONTEND_APP_NAME }} \
           --resource-group doc_knowledge \
-          --src-path frontend/frontend.zip \
-          --type zip \
-          --async false
+          --query "{user:publishingUserName,pwd:publishingPassword}" \
+          -o tsv)
+        USER=$(echo "$CREDS" | cut -f1)
+        PWD=$(echo "$CREDS" | cut -f2)
+        
+        curl -X POST \
+          "https://${{ secrets.AZURE_FRONTEND_APP_NAME }}.scm.azurewebsites.net/api/zipdeploy" \
+          -u "$USER:$PWD" \
+          -H "Content-Type: application/zip" \
+          --data-binary @frontend.zip \
+          --max-time 300
