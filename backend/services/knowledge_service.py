@@ -216,6 +216,55 @@ class KnowledgeService:
             "graph_results": graph_results
         }
 
+    def get_graph_data(self) -> Dict:
+        nodes = []
+        links = []
+        node_ids = set()
+        
+        with self.neo4j_driver.session() as session:
+            result = session.run(
+                """
+                MATCH (d:Document)-[:MENTIONS]->(e:Entity)
+                RETURN d.id AS doc_id, e.text AS entity_text, e.label AS entity_label
+                """
+            )
+            for record in result:
+                doc_id = str(record["doc_id"])
+                entity_text = record["entity_text"]
+                entity_label = record["entity_label"]
+                
+                # Add document node
+                if doc_id not in node_ids:
+                    nodes.append({
+                        "id": doc_id,
+                        "label": "Document",
+                        "name": f"Doc {doc_id}",
+                        "color": "#DC2626"
+                    })
+                    node_ids.add(doc_id)
+                
+                # Add entity node
+                if entity_text not in node_ids:
+                    nodes.append({
+                        "id": entity_text,
+                        "label": entity_label,
+                        "name": entity_text,
+                        "color": "#10B981"
+                    })
+                    node_ids.add(entity_text)
+                
+                # Add link
+                links.append({
+                    "source": doc_id,
+                    "target": entity_text,
+                    "label": "MENTIONS"
+                })
+        
+        return {
+            "nodes": nodes,
+            "links": links
+        }
+
     def close(self):
         if self._neo4j_driver:
             self._neo4j_driver.close()

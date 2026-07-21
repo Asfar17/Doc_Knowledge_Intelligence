@@ -18,6 +18,7 @@ export const documentsAPI = {
     });
   },
   getDocuments: () => api.get('/documents'),
+  getGraphData: () => api.get('/documents/graph/data'),
 };
 
 export const queryAPI = {

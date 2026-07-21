@@ -38,3 +38,5 @@ export const useTheme = () => {
   }
   return context;
 };
+
+export const useThemeContext = useTheme;

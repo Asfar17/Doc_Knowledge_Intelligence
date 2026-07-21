@@ -12,7 +12,7 @@ class Document(Base):
     content = Column(Text, nullable=True)
     file_path = Column(String, nullable=True)
     file_type = Column(String, nullable=True)
-    metadata = Column(JSON, nullable=True)
+    doc_metadata = Column("metadata", JSON, nullable=True)
     created_at = Column(DateTime(timezone=True), server_default=func.now())
     updated_at = Column(DateTime(timezone=True), onupdate=func.now())
 

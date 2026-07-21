@@ -10,5 +10,5 @@ class MemoryRecord(Base):
     session_id = Column(String, index=True, nullable=False)
     query = Column(Text, nullable=False)
     response = Column(Text, nullable=False)
-    metadata = Column(JSON, nullable=True)
+    doc_metadata = Column("metadata", JSON, nullable=True)
     created_at = Column(DateTime(timezone=True), server_default=func.now())

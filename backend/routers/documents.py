@@ -17,7 +17,7 @@ class DocumentResponse(BaseModel):
     title: str
     file_path: str | None
     file_type: str | None
-    metadata: dict | None
+    doc_metadata: dict | None
     created_at: str
     updated_at: str | None
 
@@ -32,10 +32,10 @@ class ProcessDocumentResponse(BaseModel):
     message: str | None = None
 
 
-def process_document_background(document_id: int, file_path: str, doc_type: str, metadata: dict):
+def process_document_background(document_id: int, file_path: str, doc_type: str, doc_metadata: dict):
     try:
         text = extract_document_text(file_path, doc_type)
-        knowledge_service.process_document(text, document_id, metadata)
+        knowledge_service.process_document(text, document_id, doc_metadata)
     except Exception as e:
         pass
 
@@ -62,7 +62,7 @@ async def upload_document(file: UploadFile = File(...), db: Session = Depends(ge
         title=file.filename,
         file_path=file_path,
         file_type=doc_type,
-        metadata=metadata,
+        doc_metadata=metadata,
     )
     db.add(db_document)
     db.commit()
@@ -73,7 +73,7 @@ async def upload_document(file: UploadFile = File(...), db: Session = Depends(ge
         title=db_document.title,
         file_path=db_document.file_path,
         file_type=db_document.file_type,
-        metadata=db_document.metadata,
+        doc_metadata=db_document.doc_metadata,
         created_at=db_document.created_at.isoformat() if db_document.created_at else "",
         updated_at=db_document.updated_at.isoformat() if db_document.updated_at else None,
     )
@@ -95,7 +95,7 @@ def process_document(
         document_id,
         document.file_path,
         document.file_type,
-        document.metadata or {}
+        document.doc_metadata or {}
     )
     
     return ProcessDocumentResponse(
@@ -113,7 +113,7 @@ def get_documents(skip: int = 0, limit: int = 100, db: Session = Depends(get_db)
             title=doc.title,
             file_path=doc.file_path,
             file_type=doc.file_type,
-            metadata=doc.metadata,
+            doc_metadata=doc.doc_metadata,
             created_at=doc.created_at.isoformat() if doc.created_at else "",
             updated_at=doc.updated_at.isoformat() if doc.updated_at else None,
         )
@@ -131,7 +131,12 @@ def get_document(document_id: int, db: Session = Depends(get_db)):
         title=document.title,
         file_path=document.file_path,
         file_type=document.file_type,
-        metadata=document.metadata,
+        doc_metadata=document.doc_metadata,
         created_at=document.created_at.isoformat() if document.created_at else "",
         updated_at=document.updated_at.isoformat() if document.updated_at else None,
     )
+
+
+@router.get("/graph/data")
+def get_graph_data():
+    return knowledge_service.get_graph_data()
