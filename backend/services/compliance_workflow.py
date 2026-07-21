@@ -62,17 +62,27 @@ def save_report(state: ComplianceAgentState) -> ComplianceAgentState:
 
 def create_compliance_workflow():
     workflow = StateGraph(ComplianceAgentState)
-    
+
     workflow.add_node("load_document", load_document)
     workflow.add_node("analyze_compliance", analyze_compliance)
     workflow.add_node("save_report", save_report)
-    
+
     workflow.set_entry_point("load_document")
     workflow.add_edge("load_document", "analyze_compliance")
     workflow.add_edge("analyze_compliance", "save_report")
     workflow.add_edge("save_report", END)
-    
+
     return workflow.compile()
 
 
-compliance_workflow = create_compliance_workflow()
+# Lazy initialization
+class _LazyComplianceWorkflow:
+    _instance = None
+
+    def invoke(self, state):
+        if self._instance is None:
+            self._instance = create_compliance_workflow()
+        return self._instance.invoke(state)
+
+
+compliance_workflow = _LazyComplianceWorkflow()

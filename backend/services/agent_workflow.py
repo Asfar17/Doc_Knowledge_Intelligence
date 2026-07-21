@@ -102,4 +102,18 @@ def create_workflow():
     return workflow.compile()
 
 
-workflow = create_workflow()
+# Lazy initialization — only build workflow when first used
+_workflow = None
+
+def get_workflow():
+    global _workflow
+    if _workflow is None:
+        _workflow = create_workflow()
+    return _workflow
+
+# Keep backward compat — callers using `workflow.invoke(...)` still work
+class _LazyWorkflow:
+    def invoke(self, state):
+        return get_workflow().invoke(state)
+
+workflow = _LazyWorkflow()

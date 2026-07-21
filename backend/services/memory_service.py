@@ -8,16 +8,21 @@ from config.settings import settings
 
 class MemoryService:
     def __init__(self):
-        # Azure Cache for Redis requires SSL (port 6380) and a password
-        self.redis_client = redis.Redis(
-            host=settings.REDIS_HOST,
-            port=settings.REDIS_PORT,
-            db=settings.REDIS_DB,
-            password=settings.REDIS_PASSWORD if settings.REDIS_PASSWORD else None,
-            ssl=settings.REDIS_SSL,
-            ssl_cert_reqs=None if settings.REDIS_SSL else None,
-            decode_responses=True,
-        )
+        self._redis_client = None
+
+    @property
+    def redis_client(self):
+        if self._redis_client is None:
+            self._redis_client = redis.Redis(
+                host=settings.REDIS_HOST,
+                port=settings.REDIS_PORT,
+                db=settings.REDIS_DB,
+                password=settings.REDIS_PASSWORD if settings.REDIS_PASSWORD else None,
+                ssl=settings.REDIS_SSL,
+                ssl_cert_reqs=None if settings.REDIS_SSL else None,
+                decode_responses=True,
+            )
+        return self._redis_client
 
     def get_session_memory(self, session_id: str) -> List[Dict]:
         key = f"session:{session_id}"

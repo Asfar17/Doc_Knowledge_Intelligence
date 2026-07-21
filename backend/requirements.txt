@@ -1,27 +1,47 @@
-fastapi
-uvicorn[standard]
-gunicorn
-python-dotenv
-pydantic-settings
-sqlalchemy
-psycopg2-binary
-qdrant-client
-neo4j
-llama-index
-llama-index-vector-stores-qdrant
-llama-index-graph-stores-neo4j
-PyPDF2
-python-docx
-openpyxl
-Pillow
-python-multipart
-azure-storage-blob
-transformers
-torch
-sentence-transformers
-spacy
-langgraph
-langchain
-langchain-openai
-accelerate
-redis
+# Core API
+fastapi==0.115.0
+uvicorn[standard]==0.30.6
+gunicorn==22.0.0
+python-dotenv==1.0.1
+pydantic-settings==2.4.0
+
+# Database
+sqlalchemy==2.0.35
+psycopg2-binary==2.9.9
+
+# Vector & Graph stores
+qdrant-client==1.11.0
+neo4j==5.24.0
+
+# LlamaIndex (knowledge retrieval)
+llama-index==0.11.0
+llama-index-vector-stores-qdrant==0.3.0
+llama-index-graph-stores-neo4j==0.3.0
+
+# Document processing
+PyPDF2==3.0.1
+python-docx==1.1.2
+openpyxl==3.1.5
+Pillow==10.4.0
+python-multipart==0.0.9
+
+# Azure storage
+azure-storage-blob==12.22.0
+
+# LLM & Agent orchestration
+langchain==0.3.1
+langchain-openai==0.2.1
+langgraph==0.2.28
+
+# Embeddings (lightweight CPU model only)
+sentence-transformers==3.1.0
+
+# Memory
+redis==5.1.0
+
+# NLP (optional — comment out if spacy model download causes issues)
+spacy==3.7.6
+
+# NOTE: torch, transformers, accelerate are intentionally excluded from production.
+# Florence-2 multimodal model is loaded lazily only when needed locally.
+# In production, OpenAI API handles LLM responses instead.
