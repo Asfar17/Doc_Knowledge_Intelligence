@@ -24,14 +24,14 @@ jobs:
     - name: Zip backend for deployment
       run: |
         cd backend
-        zip -r ../backend.zip . --exclude "venv/*" --exclude "__pycache__/*" --exclude "*.pyc" --exclude "antenv/*"
+        zip -r backend.zip . --exclude "venv/*" --exclude "__pycache__/*" --exclude "*.pyc" --exclude "antenv/*"
 
     - name: Deploy backend with Oryx build
       run: |
         az webapp deploy \
           --name ${{ secrets.AZURE_BACKEND_APP_NAME }} \
           --resource-group doc_knowledge \
-          --src-path backend.zip \
+          --src-path backend/backend.zip \
           --type zip \
           --async false
 
@@ -66,13 +66,13 @@ jobs:
     - name: Zip frontend for deployment
       run: |
         cd frontend
-        zip -r ../frontend.zip . --exclude "node_modules/*"
+        zip -r frontend.zip . --exclude "node_modules/*"
 
     - name: Deploy frontend
       run: |
         az webapp deploy \
           --name ${{ secrets.AZURE_FRONTEND_APP_NAME }} \
           --resource-group doc_knowledge \
-          --src-path ../frontend.zip \
+          --src-path frontend/frontend.zip \
           --type zip \
           --async false
