@@ -6,7 +6,11 @@ app = FastAPI(title="Enterprise Knowledge Intelligence System")
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],
+    allow_origins=[
+        "https://doc-knowledge-intelligence.vercel.app",
+        "http://localhost:5173",   # local dev
+        "http://localhost:3000",   # local dev alt port
+    ],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
