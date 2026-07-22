@@ -43,7 +43,7 @@ def process_document_background(document_id: int, file_path: str, doc_type: str,
 @router.post("/upload", response_model=DocumentResponse)
 async def upload_document(
     file: UploadFile = File(...),
-    background_tasks: BackgroundTasks = BackgroundTasks(),
+    background_tasks: BackgroundTasks,
     db: Session = Depends(get_db)
 ):
     file_content = await file.read()
