@@ -15,9 +15,13 @@ def get_engine():
     if _engine is None:
         _engine = create_engine(
             settings.POSTGRES_DATABASE_URL,
-            pool_pre_ping=True,       # auto-reconnect on stale connections
-            pool_size=5,
-            max_overflow=10,
+            pool_pre_ping=True,
+            pool_size=3,
+            max_overflow=5,
+            connect_args={
+                "connect_timeout": 10,  # fail fast instead of hanging
+                "options": "-c statement_timeout=30000"
+            }
         )
     return _engine
 
