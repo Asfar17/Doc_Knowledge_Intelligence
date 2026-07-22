@@ -1,106 +1,19 @@
-name: Deploy to Azure
+# Azure deployment — disabled in favour of Vercel + Render
+# Re-enable by removing the 'if: false' conditions when Azure 409 issue is resolved
+
+name: Deploy to Azure (disabled)
 
 on:
-  push:
-    branches: [ main ]
   workflow_dispatch:
+    inputs:
+      confirm:
+        description: 'Type DEPLOY to confirm Azure deployment'
+        required: true
 
 jobs:
-  # ──────────────────────────────────────────────────────
-  # Backend → Azure App Service (Python 3.12)
-  # ──────────────────────────────────────────────────────
-  deploy-backend:
-    name: Backend → Azure App Service
+  placeholder:
+    name: Azure deployment disabled
     runs-on: ubuntu-latest
-
+    if: github.event.inputs.confirm == 'DEPLOY'
     steps:
-    - uses: actions/checkout@v4
-
-    - name: Set up Python 3.12
-      uses: actions/setup-python@v5
-      with:
-        python-version: '3.12'
-
-    - name: Install dependencies into __oryx_packages__
-      run: |
-        cd backend
-        pip install --upgrade pip
-        pip install -r requirements.txt --target="__oryx_packages__"
-
-    - name: Login to Azure
-      uses: azure/login@v2
-      with:
-        creds: ${{ secrets.AZURE_CREDENTIALS }}
-
-    - name: Wait for any in-progress deployment to clear
-      run: sleep 30
-
-    - name: Deploy backend (attempt 1)
-      id: deploy1
-      continue-on-error: true
-      uses: azure/webapps-deploy@v3
-      with:
-        app-name: ${{ secrets.AZURE_BACKEND_APP_NAME }}
-        package: backend
-
-    - name: Retry deploy if attempt 1 failed (wait for lock)
-      if: steps.deploy1.outcome == 'failure'
-      run: |
-        echo "First attempt failed, waiting 60s for Azure lock to clear..."
-        sleep 60
-
-    - name: Deploy backend (attempt 2)
-      if: steps.deploy1.outcome == 'failure'
-      uses: azure/webapps-deploy@v3
-      with:
-        app-name: ${{ secrets.AZURE_BACKEND_APP_NAME }}
-        package: backend
-
-  # ──────────────────────────────────────────────────────
-  # Frontend → Azure Web App
-  # ──────────────────────────────────────────────────────
-  deploy-frontend:
-    name: Frontend → Azure Web App
-    runs-on: ubuntu-latest
-
-    steps:
-    - uses: actions/checkout@v4
-
-    - name: Set up Node.js 22
-      uses: actions/setup-node@v4
-      with:
-        node-version: '22'
-
-    - name: Install and build frontend
-      run: |
-        cd frontend
-        npm install
-        npm run build
-      env:
-        VITE_API_BASE_URL: ${{ secrets.VITE_API_BASE_URL }}
-
-    - name: Login to Azure
-      uses: azure/login@v2
-      with:
-        creds: ${{ secrets.AZURE_CREDENTIALS }}
-
-    - name: Deploy frontend (attempt 1)
-      id: fdeploy1
-      continue-on-error: true
-      uses: azure/webapps-deploy@v3
-      with:
-        app-name: ${{ secrets.AZURE_FRONTEND_APP_NAME }}
-        package: frontend
-
-    - name: Retry frontend deploy if attempt 1 failed
-      if: steps.fdeploy1.outcome == 'failure'
-      run: |
-        echo "First attempt failed, waiting 60s..."
-        sleep 60
-
-    - name: Deploy frontend (attempt 2)
-      if: steps.fdeploy1.outcome == 'failure'
-      uses: azure/webapps-deploy@v3
-      with:
-        app-name: ${{ secrets.AZURE_FRONTEND_APP_NAME }}
-        package: frontend
+    - run: echo "Azure deployment manually triggered"

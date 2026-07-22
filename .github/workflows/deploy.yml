@@ -1,0 +1,53 @@
+name: Deploy (Vercel + Render)
+
+on:
+  push:
+    branches: [ main ]
+  workflow_dispatch:
+
+jobs:
+  # ──────────────────────────────────────────
+  # Frontend → Vercel
+  # ──────────────────────────────────────────
+  deploy-frontend:
+    name: Frontend → Vercel
+    runs-on: ubuntu-latest
+
+    steps:
+    - uses: actions/checkout@v4
+
+    - name: Set up Node.js 22
+      uses: actions/setup-node@v4
+      with:
+        node-version: '22'
+
+    - name: Install Vercel CLI
+      run: npm install -g vercel@latest
+
+    - name: Deploy to Vercel
+      run: |
+        cd frontend
+        vercel deploy --prod \
+          --token=${{ secrets.VERCEL_TOKEN }} \
+          --yes
+      env:
+        VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
+        VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID }}
+
+  # ──────────────────────────────────────────
+  # Backend → Render (auto-deploys on push)
+  # Render watches the repo directly — this
+  # step just triggers a manual deploy via API
+  # ──────────────────────────────────────────
+  deploy-backend:
+    name: Backend → Render
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Trigger Render deploy
+      run: |
+        curl -X POST \
+          "https://api.render.com/v1/services/${{ secrets.RENDER_SERVICE_ID }}/deploys" \
+          -H "Authorization: Bearer ${{ secrets.RENDER_API_KEY }}" \
+          -H "Content-Type: application/json" \
+          -d '{}'
