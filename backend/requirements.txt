@@ -14,10 +14,10 @@ psycopg2-binary==2.9.9
 qdrant-client==1.11.0
 neo4j==5.24.0
 
-# ── LlamaIndex ──────────────────────────────
-llama-index-core==0.10.68
-llama-index-vector-stores-qdrant==0.2.8
-llama-index-graph-stores-neo4j==0.1.4
+# ── LlamaIndex (unpinned — let pip resolve compatible versions) ──
+llama-index-core
+llama-index-vector-stores-qdrant
+llama-index-graph-stores-neo4j
 
 # ── Document processing ─────────────────────
 PyPDF2==3.0.1
@@ -36,9 +36,5 @@ langgraph==0.2.28
 # ── Memory ──────────────────────────────────
 redis==5.1.0
 
-# ── Embeddings (no torch — use OpenAI embeddings in production) ──
-# sentence-transformers excluded: pulls in torch (~2GB)
-# Embedding generation falls back to llama-index default embedder
-
-# EXCLUDED (too large for CI/CD):
+# EXCLUDED (too large / not needed in production):
 # torch, transformers, accelerate, spacy, sentence-transformers
