@@ -11,8 +11,6 @@ from llama_index.core.node_parser import SentenceSplitter
 from llama_index.core.retrievers import VectorIndexRetriever
 import qdrant_client
 from neo4j import GraphDatabase
-from sentence_transformers import SentenceTransformer
-import spacy
 
 
 class KnowledgeService:
@@ -28,17 +26,21 @@ class KnowledgeService:
     @property
     def embedding_model(self):
         if self._embedding_model is None:
-            self._embedding_model = SentenceTransformer("all-MiniLM-L6-v2")
+            try:
+                # Use OpenAI embeddings in production (no torch dependency)
+                from langchain_openai import OpenAIEmbeddings
+                self._embedding_model = OpenAIEmbeddings(
+                    api_key=settings.OPENAI_API_KEY,
+                    model="text-embedding-3-small"
+                )
+            except Exception:
+                self._embedding_model = None
         return self._embedding_model
 
     @property
     def nlp(self):
-        if self._nlp is None:
-            try:
-                self._nlp = spacy.load("en_core_web_sm")
-            except Exception:
-                self._nlp = False  # Mark as unavailable
-        return self._nlp if self._nlp else None
+        # spaCy not installed in production — entity extraction disabled
+        return None
 
     @property
     def qdrant_client(self):

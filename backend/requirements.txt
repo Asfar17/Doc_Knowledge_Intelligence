@@ -1,47 +1,44 @@
-# Core API
+# ── Core API ────────────────────────────────
 fastapi==0.115.0
 uvicorn[standard]==0.30.6
 gunicorn==22.0.0
 python-dotenv==1.0.1
 pydantic-settings==2.4.0
+python-multipart==0.0.9
 
-# Database
+# ── Database ────────────────────────────────
 sqlalchemy==2.0.35
 psycopg2-binary==2.9.9
 
-# Vector & Graph stores
+# ── Vector & Graph ──────────────────────────
 qdrant-client==1.11.0
 neo4j==5.24.0
 
-# LlamaIndex (knowledge retrieval)
-llama-index==0.11.0
-llama-index-vector-stores-qdrant==0.3.0
-llama-index-graph-stores-neo4j==0.3.0
+# ── LlamaIndex ──────────────────────────────
+llama-index-core==0.10.68
+llama-index-vector-stores-qdrant==0.2.8
+llama-index-graph-stores-neo4j==0.1.4
 
-# Document processing
+# ── Document processing ─────────────────────
 PyPDF2==3.0.1
 python-docx==1.1.2
 openpyxl==3.1.5
 Pillow==10.4.0
-python-multipart==0.0.9
 
-# Azure storage
+# ── Azure storage ───────────────────────────
 azure-storage-blob==12.22.0
 
-# LLM & Agent orchestration
+# ── LLM & Agents ────────────────────────────
 langchain==0.3.1
 langchain-openai==0.2.1
 langgraph==0.2.28
 
-# Embeddings (lightweight CPU model only)
-sentence-transformers==3.1.0
-
-# Memory
+# ── Memory ──────────────────────────────────
 redis==5.1.0
 
-# NLP (optional — comment out if spacy model download causes issues)
-spacy==3.7.6
+# ── Embeddings (no torch — use OpenAI embeddings in production) ──
+# sentence-transformers excluded: pulls in torch (~2GB)
+# Embedding generation falls back to llama-index default embedder
 
-# NOTE: torch, transformers, accelerate are intentionally excluded from production.
-# Florence-2 multimodal model is loaded lazily only when needed locally.
-# In production, OpenAI API handles LLM responses instead.
+# EXCLUDED (too large for CI/CD):
+# torch, transformers, accelerate, spacy, sentence-transformers

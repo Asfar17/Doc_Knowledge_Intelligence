@@ -22,8 +22,7 @@ jobs:
         python-version: '3.12'
 
     - name: Install dependencies into __oryx_packages__
-      # Oryx (Azure's build system) looks for packages in __oryx_packages__
-      # This ensures uvicorn, gunicorn and all deps are found at runtime
+      # Oryx looks for __oryx_packages__ and adds it to sys.path automatically
       run: |
         cd backend
         pip install --upgrade pip
@@ -34,11 +33,21 @@ jobs:
       with:
         creds: ${{ secrets.AZURE_CREDENTIALS }}
 
+    - name: Stop app before deploy (clears 409 lock)
+      run: |
+        az webapp stop --name ${{ secrets.AZURE_BACKEND_APP_NAME }} --resource-group doc_knowledge
+        sleep 10
+
     - name: Deploy backend to Azure App Service
       uses: azure/webapps-deploy@v3
       with:
         app-name: ${{ secrets.AZURE_BACKEND_APP_NAME }}
         package: backend
+
+    - name: Start app after deploy
+      if: always()
+      run: |
+        az webapp start --name ${{ secrets.AZURE_BACKEND_APP_NAME }} --resource-group doc_knowledge
 
   # ──────────────────────────────────────────────────────
   # Frontend → Azure Web App (Node / Express static server)
