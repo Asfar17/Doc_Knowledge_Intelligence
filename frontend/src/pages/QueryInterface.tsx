@@ -1,177 +1,165 @@
-import React, { useState } from 'react';
+import React, { useState, useRef } from 'react';
 import {
-  Container,
-  Typography,
-  Box,
-  TextField,
-  Button,
-  Card,
-  CardContent,
-  CircularProgress,
-  Alert,
+  Container, Typography, Box, TextField, Button,
+  Card, CardContent, CircularProgress, Alert, Divider, Chip,
 } from '@mui/material';
-import { Send } from '@mui/icons-material';
-import { queryAPI } from '../api/api';
+import { Send, SmartToy, Search } from '@mui/icons-material';
+import api from '../api/api';
 import { useTheme } from '../context/ThemeContext';
+
+const SESSION_ID = `session-${Date.now()}`;
 
 const QueryInterface: React.FC = () => {
   const [query, setQuery] = useState('');
+  const [aiResponse, setAiResponse] = useState('');
   const [vectorResults, setVectorResults] = useState<any[]>([]);
-  const [graphResults, setGraphResults] = useState<any[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
+  const [hasQueried, setHasQueried] = useState(false);
   const { isDark } = useTheme();
 
-  const glassCardStyle = {
-    background: isDark 
-      ? 'rgba(15, 23, 42, 0.6)' 
-      : 'rgba(255, 255, 255, 0.6)',
+  const glassCard = {
+    background: isDark ? 'rgba(15,23,42,0.6)' : 'rgba(255,255,255,0.8)',
     backdropFilter: 'blur(10px)',
-    border: isDark 
-      ? '1px solid rgba(255, 255, 255, 0.1)' 
-      : '1px solid rgba(0, 0, 0, 0.1)',
+    border: isDark ? '1px solid rgba(255,255,255,0.1)' : '1px solid rgba(0,0,0,0.1)',
     borderRadius: '16px',
-    boxShadow: isDark 
-      ? '0 4px 30px rgba(0, 0, 0, 0.3)' 
-      : '0 4px 30px rgba(0, 0, 0, 0.1)',
+    boxShadow: isDark ? '0 4px 30px rgba(0,0,0,0.3)' : '0 4px 30px rgba(0,0,0,0.1)',
   };
 
-  const handleSubmit = async () => {
-    if (!query) return;
+  const textColor = { color: isDark ? '#f8fafc' : '#1e293b' };
+  const subColor = { color: isDark ? '#94a3b8' : '#64748b' };
 
+  const handleSubmit = async () => {
+    if (!query.trim()) return;
     setLoading(true);
     setError('');
+    setAiResponse('');
+    setVectorResults([]);
+    setHasQueried(true);
+
     try {
-      const res = await queryAPI.sendQuery(query);
+      // Try agent endpoint first (gives AI response)
+      const formData = new FormData();
+      formData.append('query', query);
+      formData.append('session_id', SESSION_ID);
+
+      const res = await api.post('/query/agent', formData, {
+        headers: { 'Content-Type': 'multipart/form-data' },
+        timeout: 60000,
+      });
+      setAiResponse(res.data.response || '');
       setVectorResults(res.data.vector_results || []);
-      setGraphResults(res.data.graph_results || []);
-    } catch (err) {
-      setError('Failed to get response');
+    } catch {
+      // Fall back to basic query endpoint
+      try {
+        const res = await api.post('/query/', { query, top_k: 5 });
+        setVectorResults(res.data.vector_results || []);
+        if (res.data.vector_results?.length === 0) {
+          setAiResponse('No relevant documents found. Please upload documents first.');
+        }
+      } catch (err: any) {
+        setError(err?.response?.data?.detail || 'Failed to get response. Please try again.');
+      }
     } finally {
       setLoading(false);
     }
   };
 
+  const handleKeyDown = (e: React.KeyboardEvent) => {
+    if (e.key === 'Enter' && (e.ctrlKey || e.metaKey)) handleSubmit();
+  };
+
   return (
-    <Container maxWidth="lg" sx={{ mt: 4 }}>
-      <Typography variant="h4" component="h1" gutterBottom sx={{
-        color: isDark ? '#f8fafc' : '#1e293b'
-      }}>
+    <Container maxWidth="lg" sx={{ mt: 4, pb: 6 }}>
+      <Typography variant="h4" gutterBottom sx={textColor}>
         Query Interface
       </Typography>
+      <Typography variant="body2" sx={{ ...subColor, mb: 3 }}>
+        Ask questions about your uploaded documents. Press Ctrl+Enter to send.
+      </Typography>
 
-      <Card sx={{ ...glassCardStyle, mt: 4 }}>
+      {/* Input card */}
+      <Card sx={{ ...glassCard, mb: 3 }}>
         <CardContent>
           <TextField
-            fullWidth
-            label="Ask a question"
-            variant="outlined"
+            fullWidth multiline rows={4}
+            label="Ask a question about your documents"
             value={query}
             onChange={(e) => setQuery(e.target.value)}
-            multiline
-            rows={4}
+            onKeyDown={handleKeyDown}
             sx={{
+              '& .MuiInputBase-input': textColor,
+              '& .MuiInputLabel-root': subColor,
               '& .MuiOutlinedInput-root': {
-                background: isDark ? 'rgba(15,23,42,0.4)' : 'rgba(255,255,255,0.4)',
-                '& fieldset': {
-                  borderColor: isDark ? 'rgba(255,255,255,0.2)' : 'rgba(0,0,0,0.2)',
-                },
-                '&:hover fieldset': {
-                  borderColor: isDark ? 'rgba(255,255,255,0.3)' : 'rgba(0,0,0,0.3)',
-                },
-                '&.Mui-focused fieldset': {
-                  borderColor: '#DC2626',
-                },
+                '& fieldset': { borderColor: isDark ? 'rgba(255,255,255,0.2)' : 'rgba(0,0,0,0.2)' },
+                '&.Mui-focused fieldset': { borderColor: '#DC2626' },
               },
-              '& .MuiInputLabel-root': {
-                color: isDark ? '#94a3b8' : '#64748b',
-              },
-              '& .MuiInputBase-input': {
-                color: isDark ? '#f8fafc' : '#1e293b',
-              }
             }}
           />
-          <Box sx={{ mt: 2, textAlign: 'right' }}>
-            <Button 
-              variant="contained"
-              startIcon={<Send />}
-              onClick={handleSubmit}
-              disabled={loading}
-              sx={{
-                background: 'linear-gradient(135deg, #DC2626 0%, #EF4444 100%)',
-                '&:hover': {
-                  background: 'linear-gradient(135deg, #B91C1C 0%, #DC2626 100%)',
-                }
-              }}
+          <Box sx={{ mt: 2, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+            <Typography variant="caption" sx={subColor}>Ctrl+Enter to send</Typography>
+            <Button
+              variant="contained" startIcon={loading ? <CircularProgress size={18} color="inherit" /> : <Send />}
+              onClick={handleSubmit} disabled={loading || !query.trim()}
+              sx={{ background: 'linear-gradient(135deg, #DC2626, #EF4444)', '&:hover': { background: 'linear-gradient(135deg, #B91C1C, #DC2626)' } }}
             >
-              {loading ? <CircularProgress size={24} /> : 'Send Query'}
+              {loading ? 'Thinking...' : 'Send Query'}
             </Button>
           </Box>
-          {(vectorResults.length > 0 || graphResults.length > 0) && (
-            <Box sx={{ mt: 4 }}>
-              {vectorResults.length > 0 && (
-                <Box sx={{ mb: 4 }}>
-                  <Typography variant="h6" gutterBottom sx={{
-                    color: isDark ? '#f8fafc' : '#1e293b'
-                  }}>
-                    Vector Search Results:
-                  </Typography>
-                  {vectorResults.map((result, idx) => (
-                    <Card key={idx} sx={{
-                      ...glassCardStyle,
-                      mb: 2, 
-                      p: 2,
-                    }} variant="outlined">
-                      <Typography variant="body2" sx={{
-                        color: isDark ? '#94a3b8' : '#64748b'
-                      }}>
-                        Score: {result.score?.toFixed(4) || "N/A"}
-                      </Typography>
-                      <Typography variant="body1" sx={{
-                        color: isDark ? '#f8fafc' : '#1e293b'
-                      }}>
-                        {result.text}
-                      </Typography>
-                    </Card>
-                  ))}
-                </Box>
-              )}
-              {graphResults.length > 0 && (
-                <Box>
-                  <Typography variant="h6" gutterBottom sx={{
-                    color: isDark ? '#f8fafc' : '#1e293b'
-                  }}>
-                    Graph Search Results:
-                  </Typography>
-                  {graphResults.map((result, idx) => (
-                    <Card key={idx} sx={{
-                      ...glassCardStyle,
-                      mb: 2, 
-                      p: 2,
-                    }} variant="outlined">
-                      <Typography variant="body2" sx={{
-                        color: isDark ? '#94a3b8' : '#64748b'
-                      }}>
-                        Document ID: {result.document_id}
-                      </Typography>
-                      <Typography variant="body1" sx={{
-                        color: isDark ? '#f8fafc' : '#1e293b'
-                      }}>
-                        Related Entities: {result.related_entities?.join(", ") || "None"}
-                      </Typography>
-                    </Card>
-                  ))}
-                </Box>
-              )}
-            </Box>
-          )}
-          {error && (
-            <Alert severity="error" sx={{ mt: 2, borderRadius: '12px' }}>
-              {error}
-            </Alert>
-          )}
         </CardContent>
       </Card>
+
+      {error && <Alert severity="error" sx={{ mb: 3, borderRadius: '12px' }}>{error}</Alert>}
+
+      {/* AI Response */}
+      {aiResponse && (
+        <Card sx={{ ...glassCard, mb: 3, borderLeft: '4px solid #DC2626' }}>
+          <CardContent>
+            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 2 }}>
+              <SmartToy sx={{ color: '#DC2626' }} />
+              <Typography variant="h6" sx={textColor}>AI Response</Typography>
+            </Box>
+            <Typography variant="body1" sx={{ ...textColor, lineHeight: 1.8, whiteSpace: 'pre-wrap' }}>
+              {aiResponse}
+            </Typography>
+          </CardContent>
+        </Card>
+      )}
+
+      {/* Source Documents */}
+      {vectorResults.length > 0 && (
+        <Card sx={glassCard}>
+          <CardContent>
+            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 2 }}>
+              <Search sx={{ color: '#DC2626' }} />
+              <Typography variant="h6" sx={textColor}>Source Documents</Typography>
+              <Chip label={`${vectorResults.length} found`} size="small" sx={{ background: '#DC2626', color: '#fff' }} />
+            </Box>
+            {vectorResults.map((result, idx) => (
+              <Box key={idx}>
+                {idx > 0 && <Divider sx={{ my: 2, borderColor: isDark ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.1)' }} />}
+                <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 1 }}>
+                  <Typography variant="caption" sx={subColor}>Source {idx + 1}</Typography>
+                  <Chip
+                    label={`Score: ${result.score?.toFixed(3) || 'N/A'}`}
+                    size="small"
+                    variant="outlined"
+                    sx={{ borderColor: isDark ? 'rgba(255,255,255,0.2)' : 'rgba(0,0,0,0.2)', ...subColor }}
+                  />
+                </Box>
+                <Typography variant="body2" sx={textColor}>{result.text}</Typography>
+              </Box>
+            ))}
+          </CardContent>
+        </Card>
+      )}
+
+      {/* Empty state */}
+      {hasQueried && !loading && !error && vectorResults.length === 0 && !aiResponse && (
+        <Alert severity="info" sx={{ borderRadius: '12px' }}>
+          No results found. Make sure you've uploaded and processed documents first.
+        </Alert>
+      )}
     </Container>
   );
 };

@@ -60,8 +60,13 @@ class KnowledgeService:
     @property
     def neo4j_driver(self):
         if self._neo4j_driver is None:
+            # AuraDB uses neo4j+s:// scheme with encrypted connection
+            uri = settings.NEO4J_URI
+            if not uri.startswith("neo4j+s://") and "databases.neo4j.io" in uri:
+                uri = "neo4j+s://" + uri.split("://")[-1]
             self._neo4j_driver = GraphDatabase.driver(
-                settings.NEO4J_URI, auth=(settings.NEO4J_USER, settings.NEO4J_PASSWORD)
+                uri,
+                auth=(settings.NEO4J_USER, settings.NEO4J_PASSWORD)
             )
         return self._neo4j_driver
 

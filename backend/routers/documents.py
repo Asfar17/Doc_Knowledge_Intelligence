@@ -41,7 +41,11 @@ def process_document_background(document_id: int, file_path: str, doc_type: str,
 
 
 @router.post("/upload", response_model=DocumentResponse)
-async def upload_document(file: UploadFile = File(...), db: Session = Depends(get_db)):
+async def upload_document(
+    file: UploadFile = File(...),
+    background_tasks: BackgroundTasks = BackgroundTasks(),
+    db: Session = Depends(get_db)
+):
     file_content = await file.read()
     doc_type = detect_document_type(file.filename)
 
@@ -53,7 +57,6 @@ async def upload_document(file: UploadFile = File(...), db: Session = Depends(ge
         f.write(file_content)
 
     metadata = extract_document_metadata(str(temp_path), doc_type)
-
     file_path = storage_service.save_file(file_content, file.filename)
 
     os.remove(temp_path)
@@ -67,6 +70,15 @@ async def upload_document(file: UploadFile = File(...), db: Session = Depends(ge
     db.add(db_document)
     db.commit()
     db.refresh(db_document)
+
+    # Auto-process document in background so it's indexed for queries
+    background_tasks.add_task(
+        process_document_background,
+        db_document.id,
+        file_path,
+        doc_type,
+        metadata or {}
+    )
 
     return DocumentResponse(
         id=db_document.id,
@@ -139,4 +151,8 @@ def get_document(document_id: int, db: Session = Depends(get_db)):
 
 @router.get("/graph/data")
 def get_graph_data():
-    return knowledge_service.get_graph_data()
+    try:
+        return knowledge_service.get_graph_data()
+    except Exception as e:
+        # Return empty graph if Neo4j is unavailable
+        return {"nodes": [], "links": [], "error": str(e)}

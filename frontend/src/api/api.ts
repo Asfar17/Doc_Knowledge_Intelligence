@@ -22,7 +22,15 @@ export const documentsAPI = {
 };
 
 export const queryAPI = {
-  sendQuery: (query: string) => api.post('/query', { query }),
+  sendQuery: (query: string) => api.post('/query/', { query, top_k: 5 }),
+  agentQuery: (query: string, sessionId: string) => {
+    const formData = new FormData();
+    formData.append('query', query);
+    formData.append('session_id', sessionId);
+    return api.post('/query/agent', formData, {
+      headers: { 'Content-Type': 'multipart/form-data' },
+    });
+  },
 };
 
 export const complianceAPI = {
